@@ -4,6 +4,7 @@ import os
 import argparse
 
 from binance.client import Client
+from binance.exceptions import BinanceAPIException, BinanceOrderException
 from binance.websockets import BinanceSocketManager
 from twisted.internet import reactor
 
@@ -14,6 +15,7 @@ parser.add_argument('--apisec', help='set api secret', type=str)
 parser.add_argument('-t', '--testnet', help='use testnet api', action='store_true')
 
 parser.add_argument('-s', '--symbol', help='maker symbol (default BTCUSDT)', type=str, default='BTCUSDT')
+parser.add_argument('-l', '--leverage', help='change leverage ratio (default 5)', type=int, default=5)
 
 parser.add_argument('-v', '--verbose', action='store_true')
 args = parser.parse_args()
@@ -34,7 +36,7 @@ if args.apisec != None:
     api_secret = args.apisec
 # exit if keys were not found
 if api_key is None or api_secret is None:
-    print("Cannot find api key and secret")
+    print("Can not find api key and secret")
     exit()
 
 # open client
@@ -45,7 +47,6 @@ if args.testnet:
     client.API_URL = 'https://testnet.binance.vision/api'
 
 ##### init trader bot
-
 # get market symbol
 symbol = args.symbol
 # get fees
@@ -68,3 +69,11 @@ if future_account['canTrade'] != True:
 # get future balance
 available_balance = float(future_account['availableBalance'])
 print('Available balance in future: %f USDT' % available_balance)
+
+# set leverage
+leverage = args.leverage
+change_leverage = client.futures_change_leverage(symbol=symbol, leverage=leverage)
+# check if leverage is activated correctly
+if change_leverage['leverage'] != leverage:
+    print('ERROR: Leverage ratio can not be change')
+    exit()
