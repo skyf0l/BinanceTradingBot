@@ -12,7 +12,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--apikey', help='set api key', type=str)
 parser.add_argument('--apisec', help='set api secret', type=str)
 parser.add_argument('-t', '--testnet', help='use testnet api', action='store_true')
-parser.add_argument("-v", "--verbose", action="store_true")
+
+parser.add_argument('-s', '--symbol', help='maker symbol (default BTCUSDT)', type=str, default='BTCUSDT')
+
+parser.add_argument('-v', '--verbose', action='store_true')
 args = parser.parse_args()
 
 ##### init client
@@ -36,11 +39,21 @@ if api_key is None or api_secret is None:
 
 # open client
 client = Client(api_key, api_secret)
-print("Connected to Binance!")
+print('Connected to Binance')
 # change the api endpoint url of the library (because the library does not have support for the demo environment)
 if args.testnet:
     client.API_URL = 'https://testnet.binance.vision/api'
 
-
-
-print(client.get_account())
+##### init trader bot
+# get market symbol
+symbol = args.symbol
+# get fee
+trade_fee = client.get_trade_fee(symbol=symbol)
+# check if the symbol is available
+if len(trade_fee['tradeFee']) != 1:
+    print('ERROR: Symbol \'%s\' not found' % symbol)
+    exit()
+# extract maker and taker fees
+maker_trade_fee = float(trade_fee['tradeFee'][0]['maker'])
+taker_trade_fee = float(trade_fee['tradeFee'][0]['taker'])
+print('Current trade fees on \'%s\': maker:%.4f%%, taker%.4f%%' % (symbol, maker_trade_fee * 100, taker_trade_fee * 100))
