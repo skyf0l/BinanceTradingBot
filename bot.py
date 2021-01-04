@@ -45,9 +45,10 @@ if args.testnet:
     client.API_URL = 'https://testnet.binance.vision/api'
 
 ##### init trader bot
+
 # get market symbol
 symbol = args.symbol
-# get fee
+# get fees
 trade_fee = client.get_trade_fee(symbol=symbol)
 # check if the symbol is available
 if len(trade_fee['tradeFee']) != 1:
@@ -57,3 +58,13 @@ if len(trade_fee['tradeFee']) != 1:
 maker_trade_fee = float(trade_fee['tradeFee'][0]['maker'])
 taker_trade_fee = float(trade_fee['tradeFee'][0]['taker'])
 print('Current trade fees on \'%s\': maker:%.4f%%, taker%.4f%%' % (symbol, maker_trade_fee * 100, taker_trade_fee * 100))
+
+# get future account
+future_account = client.futures_account()
+# check if trade is enabled
+if future_account['canTrade'] != True:
+    print('ERROR: Trade in future is disabled')
+    exit()
+# get future balance
+available_balance = float(future_account['availableBalance'])
+print('Available balance in future: %f USDT' % available_balance)
